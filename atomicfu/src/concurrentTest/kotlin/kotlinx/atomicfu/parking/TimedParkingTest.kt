@@ -1,6 +1,5 @@
 package kotlinx.atomicfu.parking
 
-import kotlinx.atomicfu.atomic
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import kotlin.time.measureTime
@@ -144,35 +143,3 @@ class TimedParkingTest {
 }
 
 
-internal class Fut(private val block: () -> Unit) {
-    private var thread: TestThread? = null
-    private val atomicError = atomic<Throwable?>(null)
-    val done = atomic(false)
-    init {
-        val th = testThread {
-            try { block() }
-            catch (t: Throwable) {
-                atomicError.value = t
-                throw t
-            }
-            finally { done.value = true }
-        }
-        thread = th
-    }
-    fun waitThrowing() {
-        thread!!.join()
-        throwIfError()
-    }
-
-    fun throwIfError() = atomicError.value?.let { throw it }
-
-    companion object {
-        fun waitAllAndThrow(futs: List<Fut>) {
-            while(futs.any { !it.done.value }) {
-                sleepMills(1000)
-                futs.forEach { it.throwIfError() }
-            }
-        }
-    }
-
-}
