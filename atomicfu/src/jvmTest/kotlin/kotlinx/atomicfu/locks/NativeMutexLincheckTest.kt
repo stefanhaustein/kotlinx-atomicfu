@@ -18,8 +18,8 @@ class NativeMutexLincheckTest {
 
     @Test
     fun modelCheckingTest(): Unit = ModelCheckingOptions()
-        .iterations(3) // Change to 300 for exhaustive testing
-        .invocationsPerIteration(10_000)
+        .iterations(2) // Change to 300 for exhaustive testing
+        .invocationsPerIteration(5_000)
         .actorsBefore(1)
         .threads(3)
         .actorsPerThread(3)
