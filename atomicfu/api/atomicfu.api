@@ -137,6 +137,8 @@ public final class kotlinx/atomicfu/TraceKt {
 
 public final class kotlinx/atomicfu/locks/Mutex {
 	public fun <init> ()V
+	public fun <init> (Ljava/util/concurrent/locks/ReentrantLock;)V
+	public final fun getReentrantLock ()Ljava/util/concurrent/locks/ReentrantLock;
 	public final fun isLocked ()Z
 	public final fun lock ()V
 	public final fun tryLock ()Z

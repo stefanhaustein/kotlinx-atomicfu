@@ -10,7 +10,7 @@ class NativeMutexTest {
     
     @Test
     fun testNativeMutexSlow() {
-        val mutex = Mutex()
+        val mutex = NativeMutex()
         val resultList = mutableListOf<String>()
 
         val fut1 = testThread {  

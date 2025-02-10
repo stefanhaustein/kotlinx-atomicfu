@@ -1,9 +1,10 @@
 package kotlinx.atomicfu.locks
 
 /**
- * Multiplatform mutex.
- * On native based on pthread system calls.
- * On JVM delegates to ReentrantLock.
+ * Part of multiplatform mutex.
+ * Since this mutex will run in a single threaded environment, it doesn't provide any real synchronization.
+ * 
+ * It does keep track of reentrancy.
  */
 actual class Mutex {
     private var state = 0

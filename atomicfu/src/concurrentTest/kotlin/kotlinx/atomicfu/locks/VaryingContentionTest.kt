@@ -54,7 +54,7 @@ class VaryingContentionTest {
     )
     
     class LockInt {
-        private val lock = Mutex()
+        private val lock = NativeMutex()
         private val check = atomic(0)
         var n = 0
         fun lock() {

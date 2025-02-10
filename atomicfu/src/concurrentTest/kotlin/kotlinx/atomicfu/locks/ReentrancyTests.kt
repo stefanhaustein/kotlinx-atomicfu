@@ -7,7 +7,7 @@ class ReentrancyTests {
     
     @Test
     fun reentrantTestSuccess() {
-        val lock = Mutex()
+        val lock = NativeMutex()
         lock.lock()
         lock.lock()
         lock.unlock()
@@ -16,7 +16,7 @@ class ReentrancyTests {
     
     @Test
     fun reentrantTestFail() {
-        val lock = Mutex()
+        val lock = NativeMutex()
         lock.lock()
         lock.lock()
         lock.unlock()

@@ -1,4 +1,4 @@
-import kotlinx.atomicfu.locks.Mutex
+import kotlinx.atomicfu.locks.NativeMutex
 import org.jetbrains.kotlinx.lincheck.LoggingLevel
 import org.jetbrains.kotlinx.lincheck.annotations.Operation
 import org.jetbrains.kotlinx.lincheck.check
@@ -13,7 +13,7 @@ class NativeMutexLincheckReentrantTest {
         fun inc(): Int = ++value
         fun get() = value
     }
-    private val lock = Mutex()
+    private val lock = NativeMutex()
     private val counter = Counter()
 
     @Test

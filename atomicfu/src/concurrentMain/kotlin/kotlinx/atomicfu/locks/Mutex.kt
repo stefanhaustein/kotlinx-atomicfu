@@ -5,39 +5,40 @@ import kotlinx.atomicfu.atomic
 import kotlinx.atomicfu.parking.ThreadParker
 import kotlinx.atomicfu.parking.currentThreadId
 
-/**
- * Mutex implementation for Kotlin/Native.
- *
- * The [state] variable stands for: 0 -> Lock is free
- *                                  1 -> Lock is locked but no waiters
- *                                  4 -> Lock is locked with 3 waiters
- *
- * The state.incrementAndGet() call makes my claim on the lock.
- * The returned value either means I acquired it (when it is 1).
- * Or I need to enqueue and park (when it is > 1).
- *
- * The [holdCount] variable is to enable reentrancy.
- *
- * Works by using a [parkingQueue].
- * When a thread tries to acquire the lock, but finds it is already locked it enqueues by appending to the [parkingQueue].
- * On enqueue the parking queue provides the second last node, this node is used to park on.
- * When our thread is woken up that means that the thread parked on the thrid last node called unpark on the second last node.
- * Since a woken up thread is first inline it means that it's node is the head and can therefore dequeue.
- *
- * Unlocking happens by calling state.decrementAndGet().
- * When the returned value is 0 it means the lock is free and we can simply return.
- * If the new state is > 0, then there are waiters. We wake up the first by unparking the head of the queue.
- * This even works when a thread is not parked yet,
- * since the ThreadParker can be pre-unparked resulting in the parking call to return immediately.
- */
-actual class Mutex {
+internal class NativeMutex {
+    /**
+     * Mutex implementation for Kotlin/Native.
+     * In concurrentMain sourceSet to be testable with Lincheck.
+     *
+     * The [state] variable stands for: 0 -> Lock is free
+     *                                  1 -> Lock is locked but no waiters
+     *                                  4 -> Lock is locked with 3 waiters
+     *
+     * The state.incrementAndGet() call makes my claim on the lock.
+     * The returned value either means I acquired it (when it is 1).
+     * Or I need to enqueue and park (when it is > 1).
+     *
+     * The [holdCount] variable is to enable reentrancy.
+     *
+     * Works by using a [parkingQueue].
+     * When a thread tries to acquire the lock, but finds it is already locked it enqueues by appending to the [parkingQueue].
+     * On enqueue the parking queue provides the second last node, this node is used to park on.
+     * When our thread is woken up that means that the thread parked on the thrid last node called unpark on the second last node.
+     * Since a woken up thread is first inline it means that it's node is the head and can therefore dequeue.
+     *
+     * Unlocking happens by calling state.decrementAndGet().
+     * When the returned value is 0 it means the lock is free and we can simply return.
+     * If the new state is > 0, then there are waiters. We wake up the first by unparking the head of the queue.
+     * This even works when a thread is not parked yet,
+     * since the ThreadParker can be pre-unparked resulting in the parking call to return immediately.
+     */
     private val parkingQueue = ParkingQueue()
     private val owningThread = atomic(-1L)
     private val state = atomic(0)
     private val holdCount = atomic(0)
 
 
-    actual fun lock() {
+    fun lock() {
         val currentThreadId = currentThreadId()
 
         // Has to be checked in this order!
@@ -69,7 +70,7 @@ actual class Mutex {
         }
     }
 
-    actual fun unlock() {
+    fun unlock() {
         val currentThreadId = currentThreadId()
         val currentOwnerId = owningThread.value
         if (currentThreadId != currentOwnerId) throw IllegalStateException("Thread is not holding the lock")
@@ -91,11 +92,11 @@ actual class Mutex {
         }
     }
 
-    actual fun isLocked(): Boolean {
+    fun isLocked(): Boolean {
         return state.value > 0
     }
 
-    actual fun tryLock(): Boolean {
+    fun tryLock(): Boolean {
         val currentThreadId = currentThreadId()
         if (holdCount.value > 0 && owningThread.value == currentThreadId || state.compareAndSet(0, 1)) {
             owningThread.value = currentThreadId
@@ -106,7 +107,7 @@ actual class Mutex {
     }
 
     // Based on Micheal-Scott Queue
-    internal inner class ParkingQueue {
+    private class ParkingQueue {
         private val head: AtomicRef<Node>
         private val tail: AtomicRef<Node>
 
@@ -142,7 +143,7 @@ actual class Mutex {
 
     }
 
-    internal inner class Node {
+    private class Node {
         val parker = ThreadParker()
         val next = atomic<Node?>(null)
     }
